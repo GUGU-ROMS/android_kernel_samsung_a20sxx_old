@@ -3,6 +3,8 @@
 hostprogs-y	:= dtc
 ifeq ($(DTC_EXT),)
 always		:= $(hostprogs-y)
+HOSTCFLAGS_dtc-lexer.lex.o := -fcommon
+HOSTCFLAGS_dtc-parser.tab.o := -fcommon
 endif
 
 dtc-objs	:= dtc.o flattree.o fstree.o data.o livetree.o treesource.o \
