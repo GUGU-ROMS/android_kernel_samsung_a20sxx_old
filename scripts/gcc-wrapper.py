@@ -50,12 +50,13 @@ allowed_warnings = set([
 ofile = None
 
 warning_re = re.compile(r'''(.*/|)([^/]+\.[a-z]+:\d+):(\d+:)? warning:''')
+
 def interpret_warning(line):
     """Decode the message from gcc.  The messages we care about have a filename, and a warning"""
     line = line.rstrip('\n')
     m = warning_re.match(line)
     if m and m.group(2) not in allowed_warnings:
-        print >> sys.stderr, "error, forbidden warning:", m.group(2)
+        print("error, forbidden warning:", m.group(2), file=sys.stderr)
 
         # If there is a warning, remove any object if it exists.
         if ofile:
@@ -66,7 +67,9 @@ def interpret_warning(line):
         sys.exit(1)
 
 def run_gcc():
+    # Pega os argumentos passados para o compilador
     args = sys.argv[1:]
+    
     # Look for -o
     try:
         i = args.index('-o')
@@ -75,22 +78,21 @@ def run_gcc():
     except (ValueError, IndexError):
         pass
 
-    compiler = sys.argv[0]
-
     try:
-        proc = subprocess.Popen(args, stderr=subprocess.PIPE)
+        # No Python 3, precisamos decodificar a saída do subprocess (utf-8)
+        proc = subprocess.Popen(args, stderr=subprocess.PIPE, text=True)
         for line in proc.stderr:
-            print >> sys.stderr, line,
+            print(line, file=sys.stderr, end='')
             interpret_warning(line)
 
         result = proc.wait()
     except OSError as e:
         result = e.errno
         if result == errno.ENOENT:
-            print >> sys.stderr, args[0] + ':',e.strerror
-            print >> sys.stderr, 'Is your PATH set correctly?'
+            print(args[0] + ':', e.strerror, file=sys.stderr)
+            print('Is your PATH set correctly?', file=sys.stderr)
         else:
-            print >> sys.stderr, ' '.join(args), str(e)
+            print(' '.join(args), str(e), file=sys.stderr)
 
     return result
 
